@@ -6,7 +6,7 @@ import {
   CognitoUser,
 } from "amazon-cognito-identity-js";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const poolData = {
   UserPoolId: "us-west-2_c1Dq5T2lY", // Your user pool id here
@@ -14,34 +14,27 @@ const poolData = {
 };
 const userPool = new CognitoUserPool(poolData);
 
-console.log({ userPool });
-
-const attributeList = [];
-
 const dataEmail = {
   Name: "email",
   Value: "email@mydomain.com",
 };
-
 const dataPhoneNumber = {
   Name: "phone_number",
   Value: "+16024108498",
 };
+
+const attributeList = [];
 const attributeEmail = new CognitoUserAttribute(dataEmail);
 const attributePhoneNumber = new CognitoUserAttribute(dataPhoneNumber);
-
 attributeList.push(attributeEmail);
 attributeList.push(attributePhoneNumber);
 
 function App() {
-  const [user, setUser] = useState({});
+  const [user, setUser] = useState(null);
   const [signUpResult, setSignUpResult] = useState(null);
 
-  const username = `user-${Date.now()}`;
-
-  console.log({ username });
-
   const signUp = () => {
+    const username = `user-${Date.now()}`;
     userPool.signUp(
       username,
       "password",
@@ -55,14 +48,50 @@ function App() {
           });
           return;
         }
-        // var cognitoUser = result.user;
-        // console.log("user name is " + cognitoUser.getUsername());
 
         console.log({ result });
         setSignUpResult(result);
         setUser(result.user);
       }
     );
+  };
+
+  const confirmSignUp = (user) => {
+    const userData = {
+      Username: user.username,
+      Pool: userPool,
+    };
+    const cognitoUser = new CognitoUser(userData);
+
+    cognitoUser.confirmRegistration("123456", true, (err, result) => {
+      if (err) {
+        console.error(
+          "confirmRegistration error: ",
+          err.message || JSON.stringify(err)
+        );
+        return;
+      }
+      console.log("confirmRegistration result: " + result);
+    });
+  };
+
+  const resendConfirmationCode = (user) => {
+    var userData = {
+      Username: user.username,
+      Pool: userPool,
+    };
+
+    const cognitoUser = new CognitoUser(userData);
+    cognitoUser.resendConfirmationCode((err, result) => {
+      if (err) {
+        console.error(
+          "resendConfirmationCode error: ",
+          err.message || JSON.stringify(err)
+        );
+        return;
+      }
+      console.log("resendConfirmationCode result: ", result);
+    });
   };
 
   return (
@@ -74,12 +103,25 @@ function App() {
             <p>
               {signUpResult.error
                 ? signUpResult.error
-                : `Great success! ${signUpResult.user.username} is now signed up.`}
+                : `Great success! ${user.username} is now signed up.`}
             </p>
+            {!signUpResult.userConfirmed && user && (
+              <>
+                <button onClick={() => confirmSignUp(user)}>
+                  Confirm sign up
+                </button>
+                <button onClick={() => resendConfirmationCode(user)}>
+                  Resend Confirmation Code
+                </button>
+              </>
+            )}
+            <div className="separator"></div>
           </>
         )}
       </div>
-      <button onClick={signUp}>Sign Up</button>
+      <button onClick={signUp}>
+        {user ? "Sign Up Another User" : "Sign Up"}
+      </button>
     </div>
   );
 }

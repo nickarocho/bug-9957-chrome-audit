@@ -43,10 +43,16 @@ body {
 
 .app-info {
   text-align: center;
-  margin: 1rem;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+.separator {
+  width: 100%;
+  border-bottom: 1px solid #333944;
+  text-align: center;
+  margin: 1rem;
 }
